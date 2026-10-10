@@ -41,6 +41,9 @@ class EggExporterService
             'file_denylist' => Collection::make($egg->inherit_file_denylist)->filter(function ($value) {
                 return !empty($value);
             }),
+            'file_hidden' => Collection::make($egg->inherit_file_hidden)->filter(function ($value) {
+                return !empty($value);
+            })->values(),
             'startup' => $egg->startup,
             'config' => [
                 'files' => $egg->inherit_config_files,

@@ -13,6 +13,7 @@ import { WithClassname } from '@/components/types';
 import Portal from '@/components/elements/Portal';
 import { CloudUploadIcon } from '@heroicons/react/outline';
 import { useSignal } from '@preact/signals-react';
+import { PROTECTED_FILE_UPLOAD_ERROR } from '@/components/server/files/protected';
 
 function isFileOrDirectory(event: DragEvent): boolean {
     if (!event.dataTransfer?.types) {
@@ -28,7 +29,7 @@ export default ({ className }: WithClassname) => {
     const visible = useSignal(false);
     const timeouts = useSignal<NodeJS.Timeout[]>([]);
 
-    const { mutate } = useFileManagerSwr();
+    const { data: directoryFiles, mutate } = useFileManagerSwr();
     const { addError, clearAndAddHttpError } = useFlashKey('files');
 
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
@@ -68,7 +69,18 @@ export default ({ className }: WithClassname) => {
             return addError('Folder uploads are not supported.', 'Error');
         }
 
-        const uploads = list.map((file) => {
+        // Never overwrite a protected file in the current directory; skip it and upload the rest.
+        const protectedNames = new Set(directoryFiles?.filter((file) => file.isProtected).map((file) => file.name));
+        const skipped = list.filter((file) => protectedNames.has(file.name));
+        const uploadable = list.filter((file) => !protectedNames.has(file.name));
+
+        if (skipped.length > 0) {
+            addError(PROTECTED_FILE_UPLOAD_ERROR + skipped.map((file) => file.name).join(', '), 'Error');
+        }
+
+        if (uploadable.length === 0) return;
+
+        const uploads = uploadable.map((file) => {
             const controller = new AbortController();
             pushFileUpload({
                 name: file.name,

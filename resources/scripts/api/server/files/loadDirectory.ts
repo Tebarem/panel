@@ -9,6 +9,7 @@ export interface FileObject {
     size: number;
     isFile: boolean;
     isSymlink: boolean;
+    isProtected: boolean;
     mimetype: string;
     createdAt: Date;
     modifiedAt: Date;

@@ -15,7 +15,7 @@ import { Dialog } from '@/components/elements/dialog';
 const MassActionsBar = () => {
     const uuid = ServerContext.useStoreState((state) => state.server.data!.uuid);
 
-    const { mutate } = useFileManagerSwr();
+    const { data: files, mutate } = useFileManagerSwr();
     const { clearFlashes, clearAndAddHttpError } = useFlash();
     const [loading, setLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('');
@@ -23,8 +23,13 @@ const MassActionsBar = () => {
     const [showMove, setShowMove] = useState(false);
     const directory = ServerContext.useStoreState((state) => state.files.directory);
 
-    const selectedFiles = ServerContext.useStoreState((state) => state.files.selectedFiles);
+    const storedSelectedFiles = ServerContext.useStoreState((state) => state.files.selectedFiles);
     const setSelectedFiles = ServerContext.useStoreActions((actions) => actions.files.setSelectedFiles);
+
+    // Protected files can never be part of a bulk action, even if they were selected before the listing
+    // was refreshed and they became protected.
+    const protectedNames = new Set(files?.filter((file) => file.isProtected).map((file) => file.name));
+    const selectedFiles = storedSelectedFiles.filter((name) => !protectedNames.has(name));
 
     useEffect(() => {
         if (!loading) setLoadingMessage('');

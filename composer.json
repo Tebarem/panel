@@ -30,6 +30,7 @@
         "laracasts/utilities": "~3.2.3",
         "laravel/framework": "^12.60.0",
         "laravel/helpers": "^1.8.0",
+        "laravel/passport": "~13.7.6",
         "laravel/sanctum": "^4.2.0",
         "laravel/tinker": "^2.10.0",
         "laravel/ui": "~4.6.3",
@@ -100,6 +101,9 @@
         ]
     },
     "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        },
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,

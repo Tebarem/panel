@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
 use Pterodactyl\Http\Controllers\Controller;
 use Symfony\Component\HttpFoundation\Response;
+use Pterodactyl\Services\Eggs\EggServerSyncService;
 use Pterodactyl\Services\Eggs\Sharing\EggExporterService;
 use Pterodactyl\Services\Eggs\Sharing\EggImporterService;
 use Pterodactyl\Http\Requests\Admin\Egg\EggImportFormRequest;
@@ -22,6 +23,7 @@ class EggShareController extends Controller
         protected EggExporterService $exporterService,
         protected EggImporterService $importerService,
         protected EggUpdateImporterService $updateImporterService,
+        protected EggServerSyncService $serverSyncService,
     ) {
     }
 
@@ -66,7 +68,13 @@ class EggShareController extends Controller
      */
     public function update(EggImportFormRequest $request, Egg $egg): RedirectResponse
     {
-        $this->updateImporterService->handle($egg, $request->file('import_file'));
+        $fingerprint = EggServerSyncService::fingerprint($egg);
+
+        $updated = $this->updateImporterService->handle($egg, $request->file('import_file'));
+        if ($fingerprint !== EggServerSyncService::fingerprint($updated)) {
+            $this->serverSyncService->handle([$updated->id]);
+        }
+
         $this->alert->success(trans('admin/nests.eggs.notices.updated_via_import'))->flash();
 
         return redirect()->route('admin.nests.egg.view', ['egg' => $egg]);

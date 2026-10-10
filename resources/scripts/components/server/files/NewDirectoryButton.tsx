@@ -40,6 +40,7 @@ const generateDirectoryData = (name: string): FileObject => {
         size: 0,
         isFile: false,
         isSymlink: false,
+        isProtected: false,
         mimetype: '',
         createdAt: new Date(),
         modifiedAt: new Date(),

@@ -21,6 +21,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string $update_url
  * @property bool $force_outgoing_ip
  * @property array|null $file_denylist
+ * @property array|null $file_hidden
+ * @property int|null $docker_registry_id
+ * @property int|null $egg_source_id
+ * @property string|null $egg_source_path
  * @property string|null $config_files
  * @property string|null $config_startup
  * @property string|null $config_logs
@@ -42,12 +46,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string|null $inherit_config_logs
  * @property string|null $inherit_config_stop
  * @property string $inherit_file_denylist
+ * @property array|null $inherit_file_hidden
  * @property array|null $inherit_features
  * @property Nest $nest
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\Server[] $servers
  * @property \Illuminate\Database\Eloquent\Collection|\Pterodactyl\Models\EggVariable[] $variables
  * @property Egg|null $scriptFrom
  * @property Egg|null $configFrom
+ * @property DockerRegistry|null $dockerRegistry
+ * @property EggSource|null $eggSource
  */
 #[Attributes\Identifiable('eegg')]
 class Egg extends Model implements Identifiable
@@ -94,6 +101,8 @@ class Egg extends Model implements Identifiable
         'docker_images',
         'force_outgoing_ip',
         'file_denylist',
+        'file_hidden',
+        'docker_registry_id',
         'config_files',
         'config_startup',
         'config_logs',
@@ -119,6 +128,9 @@ class Egg extends Model implements Identifiable
         'features' => 'array',
         'docker_images' => 'array',
         'file_denylist' => 'array',
+        'file_hidden' => 'array',
+        'docker_registry_id' => 'integer',
+        'egg_source_id' => 'integer',
     ];
 
     public static array $validationRules = [
@@ -130,6 +142,11 @@ class Egg extends Model implements Identifiable
         'author' => 'required|string|email',
         'file_denylist' => 'array|nullable',
         'file_denylist.*' => 'string',
+        'file_hidden' => 'array|nullable',
+        'file_hidden.*' => 'string',
+        'docker_registry_id' => 'sometimes|nullable|integer',
+        'egg_source_id' => 'sometimes|nullable|integer',
+        'egg_source_path' => 'sometimes|nullable|string|max:500',
         'docker_images' => 'required|array|min:1',
         'docker_images.*' => ['required', 'string', 'max:191', 'regex:/^[\w#\.\/\- ]*\|?~?[\w\.\/\-:@ ]*$/'],
         'startup' => 'required|nullable|string',
@@ -145,6 +162,10 @@ class Egg extends Model implements Identifiable
     protected $attributes = [
         'features' => null,
         'file_denylist' => null,
+        'file_hidden' => null,
+        'docker_registry_id' => null,
+        'egg_source_id' => null,
+        'egg_source_path' => null,
         'config_stop' => null,
         'config_startup' => null,
         'config_logs' => null,
@@ -266,6 +287,19 @@ class Egg extends Model implements Identifiable
     }
 
     /**
+     * Returns the hidden file rules for this egg. If the egg copies its configuration from
+     * another egg, the parent's rules are used instead, exactly like "file_denylist".
+     */
+    public function getInheritFileHiddenAttribute(): ?array
+    {
+        if (is_null($this->config_from)) {
+            return $this->file_hidden;
+        }
+
+        return $this->configFrom->file_hidden;
+    }
+
+    /**
      * Gets nest associated with an egg.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\Pterodactyl\Models\Nest, $this>
@@ -313,5 +347,25 @@ class Egg extends Model implements Identifiable
     public function configFrom(): BelongsTo
     {
         return $this->belongsTo(self::class, 'config_from');
+    }
+
+    /**
+     * Gets the Docker registry whose credentials should be used when pulling images for this egg.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\Pterodactyl\Models\DockerRegistry, $this>
+     */
+    public function dockerRegistry(): BelongsTo
+    {
+        return $this->belongsTo(DockerRegistry::class, 'docker_registry_id');
+    }
+
+    /**
+     * Gets the egg source (remote repository or URL) this egg is synchronized from, if any.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\Pterodactyl\Models\EggSource, $this>
+     */
+    public function eggSource(): BelongsTo
+    {
+        return $this->belongsTo(EggSource::class, 'egg_source_id');
     }
 }

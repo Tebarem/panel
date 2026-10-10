@@ -122,6 +122,21 @@
                                 <i class="fa fa-th-large"></i> <span>Nests</span>
                             </a>
                         </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.egg-sources') ?: 'active' }}">
+                            <a href="{{ route('admin.egg-sources') }}">
+                                <i class="fa fa-cloud-download"></i> <span>Egg Sources</span>
+                            </a>
+                        </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.registries') ?: 'active' }}">
+                            <a href="{{ route('admin.registries') }}">
+                                <i class="fa fa-lock"></i> <span>Registries</span>
+                            </a>
+                        </li>
+                        <li class="{{ ! starts_with(Route::currentRouteName(), 'admin.oauth') ?: 'active' }}">
+                            <a href="{{ route('admin.oauth') }}">
+                                <i class="fa fa-key"></i> <span>OAuth Apps</span>
+                            </a>
+                        </li>
                     </ul>
                 </section>
             </aside>

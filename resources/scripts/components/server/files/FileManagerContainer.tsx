@@ -39,7 +39,7 @@ export default () => {
     const setDirectory = ServerContext.useStoreActions((actions) => actions.files.setDirectory);
 
     const setSelectedFiles = ServerContext.useStoreActions((actions) => actions.files.setSelectedFiles);
-    const selectedFilesLength = ServerContext.useStoreState((state) => state.files.selectedFiles.length);
+    const selectedFiles = ServerContext.useStoreState((state) => state.files.selectedFiles);
 
     useEffect(() => {
         clearFlashes('files');
@@ -51,8 +51,12 @@ export default () => {
         mutate();
     }, [directory]);
 
+    // Protected files are visible but cannot be acted upon, so they are never part of a bulk selection.
+    const selectableFiles = files?.filter((file) => !file.isProtected) || [];
+    const selectedCount = selectableFiles.filter((file) => selectedFiles.includes(file.name)).length;
+
     const onSelectAllClick = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSelectedFiles(e.currentTarget.checked ? files?.map((file) => file.name) || [] : []);
+        setSelectedFiles(e.currentTarget.checked ? selectableFiles.map((file) => file.name) : []);
     };
 
     if (error) {
@@ -68,7 +72,8 @@ export default () => {
                             <FileActionCheckbox
                                 type={'checkbox'}
                                 css={tw`mx-4`}
-                                checked={selectedFilesLength === (files?.length === 0 ? -1 : files?.length)}
+                                checked={selectableFiles.length > 0 && selectedCount === selectableFiles.length}
+                                disabled={selectableFiles.length === 0}
                                 onChange={onSelectAllClick}
                             />
                         }

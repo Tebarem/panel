@@ -60,6 +60,13 @@ return [
             'driver' => 'token',
             'provider' => 'users',
         ],
+        // Bearer tokens issued by the OAuth2/OIDC provider (Laravel Passport). Only
+        // used by /oauth/userinfo; never the default guard and not used by the
+        // panel's client or application APIs.
+        'oauth' => [
+            'driver' => 'passport',
+            'provider' => 'users',
+        ],
     ],
 
     /*

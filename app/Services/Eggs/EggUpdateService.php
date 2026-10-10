@@ -35,10 +35,9 @@ class EggUpdateService
             }
         }
 
-        // TODO(dane): Once the admin UI is done being reworked and this is exposed
-        //  in said UI, remove this so that you can actually update the denylist.
-        unset($data['file_denylist']);
-
+        // The file rules ("file_denylist" and "file_hidden") are only ever present in $data when
+        // they were submitted by the admin form, so they can be updated here without any extra
+        // handling. Callers are responsible for pushing the change to Wings (see EggServerSyncService).
         $this->repository->withoutFreshModel()->update($egg->id, $data);
     }
 }

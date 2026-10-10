@@ -46,6 +46,19 @@
                                 <p class="text-muted small">A description of this Egg.</p>
                             </div>
                             <div class="form-group">
+                                <label for="pDockerRegistry" class="control-label">Docker Registry (optional)</label>
+                                <select name="docker_registry_id" id="pDockerRegistry" class="form-control">
+                                    <option value="" {{ old('docker_registry_id') ? '' : 'selected' }}>None</option>
+                                    @foreach($registries as $registry)
+                                        <option value="{{ $registry->id }}" {{ (string) old('docker_registry_id') === (string) $registry->id ? 'selected' : '' }}>{{ $registry->name }} ({{ $registry->registry }})</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-muted small">
+                                    Credentials for a private Docker registry, used to pull the images for servers using this Egg. Manage registries under
+                                    <a href="{{ route('admin.registries') }}">Registries</a>. Credentials are only sent to Wings for images that belong to the registry.
+                                </p>
+                            </div>
+                            <div class="form-group">
                                 <div class="checkbox checkbox-primary no-margin-bottom">
                                     <input id="pForceOutgoingIp" name="force_outgoing_ip" type="checkbox" value="1" {{ \Pterodactyl\Helpers\Utilities::checked('force_outgoing_ip', 0) }} />
                                     <label for="pForceOutgoingIp" class="strong">Force Outgoing IP</label>
@@ -79,6 +92,34 @@
                                     </select>
                                     <p class="text-muted small">Additional features belonging to the egg. Useful for configuring additional panel modifications.</p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="pFileHidden" class="control-label">Hidden Files</label>
+                                <textarea id="pFileHidden" name="file_hidden" class="form-control" rows="6">{{ old('file_hidden') }}</textarea>
+                                <p class="text-muted small">
+                                    Files matching these patterns are completely hidden from users going through Wings. They are not listed in the file manager,
+                                    cannot be read, downloaded, modified, or included in backups, and requests for them behave as if they do not exist.
+                                    Enter one gitignore-style pattern per line, relative to the server root (for example <code>/secrets/</code> or <code>*.key</code>).
+                                    The server process itself is not affected.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="pFileDenylist" class="control-label">Protected Files</label>
+                                <textarea id="pFileDenylist" name="file_denylist" class="form-control" rows="6">{{ old('file_denylist') }}</textarea>
+                                <p class="text-muted small">
+                                    Files matching these patterns remain visible in the file manager, but are locked. They cannot be read, downloaded, edited,
+                                    renamed, moved, deleted, or included in user archives and backups. Uses the same pattern syntax as Hidden Files.
+                                    A file matching both lists is treated as hidden.
+                                </p>
+                                <p class="text-muted small">
+                                    If this Egg copies its configuration from another Egg, the file rules of that Egg are used and these fields are ignored.
+                                </p>
                             </div>
                         </div>
                     </div>

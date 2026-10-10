@@ -194,6 +194,28 @@ Route::group(['prefix' => 'mounts'], function () {
 
 /*
 |--------------------------------------------------------------------------
+| OAuth App Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/oauth
+|
+*/
+Route::group(['prefix' => 'oauth'], function () {
+    Route::get('/', [Admin\OAuthClientController::class, 'index'])->name('admin.oauth');
+    Route::get('/new', [Admin\OAuthClientController::class, 'create'])->name('admin.oauth.new');
+    Route::get('/view/{client}', [Admin\OAuthClientController::class, 'view'])->name('admin.oauth.view');
+
+    Route::post('/', [Admin\OAuthClientController::class, 'store'])->name('admin.oauth.store');
+    Route::post('/view/{client}/regenerate-secret', [Admin\OAuthClientController::class, 'regenerateSecret'])->name('admin.oauth.regenerate');
+    Route::post('/view/{client}/revoke-tokens', [Admin\OAuthClientController::class, 'revokeTokens'])->name('admin.oauth.revoke');
+
+    Route::patch('/view/{client}', [Admin\OAuthClientController::class, 'update'])->name('admin.oauth.update');
+
+    Route::delete('/view/{client}', [Admin\OAuthClientController::class, 'delete'])->name('admin.oauth.delete');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Nest Controller Routes
 |--------------------------------------------------------------------------
 |
@@ -225,4 +247,43 @@ Route::group(['prefix' => 'nests'], function () {
     Route::delete('/view/{nest:id}', [Admin\Nests\NestController::class, 'destroy']);
     Route::delete('/egg/{egg:id}', [Admin\Nests\EggController::class, 'destroy']);
     Route::delete('/egg/{egg:id}/variables/{variable:id}', [Admin\Nests\EggVariableController::class, 'destroy']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Docker Registry Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/registries
+|
+*/
+Route::group(['prefix' => 'registries'], function () {
+    Route::get('/', [Admin\DockerRegistryController::class, 'index'])->name('admin.registries');
+    Route::get('/new', [Admin\DockerRegistryController::class, 'create'])->name('admin.registries.new');
+    Route::get('/view/{registry:id}', [Admin\DockerRegistryController::class, 'view'])->name('admin.registries.view');
+
+    Route::post('/new', [Admin\DockerRegistryController::class, 'store']);
+
+    Route::patch('/view/{registry:id}', [Admin\DockerRegistryController::class, 'update']);
+    Route::delete('/view/{registry:id}', [Admin\DockerRegistryController::class, 'delete'])->name('admin.registries.delete');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Egg Source Controller Routes
+|--------------------------------------------------------------------------
+|
+| Endpoint: /admin/egg-sources
+|
+*/
+Route::group(['prefix' => 'egg-sources'], function () {
+    Route::get('/', [Admin\EggSourceController::class, 'index'])->name('admin.egg-sources');
+    Route::get('/new', [Admin\EggSourceController::class, 'create'])->name('admin.egg-sources.new');
+    Route::get('/view/{source:id}', [Admin\EggSourceController::class, 'view'])->name('admin.egg-sources.view');
+
+    Route::post('/new', [Admin\EggSourceController::class, 'store']);
+    Route::post('/view/{source:id}/sync', [Admin\EggSourceController::class, 'sync'])->name('admin.egg-sources.sync');
+
+    Route::patch('/view/{source:id}', [Admin\EggSourceController::class, 'update']);
+    Route::delete('/view/{source:id}', [Admin\EggSourceController::class, 'delete'])->name('admin.egg-sources.delete');
 });

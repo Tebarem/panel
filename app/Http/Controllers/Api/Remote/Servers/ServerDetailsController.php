@@ -69,7 +69,7 @@ class ServerDetailsController extends Controller
 
         // Avoid run-away N+1 SQL queries by preloading the relationships that are used
         // within each of the services called below.
-        $servers = Server::query()->with('allocations', 'egg', 'mounts', 'variables', 'location')
+        $servers = Server::query()->with('allocations', 'egg.configFrom', 'egg.dockerRegistry', 'mounts', 'variables', 'location')
             ->where('node_id', $node->id)
             // If you don't cast this to a string you'll end up with a stringified per_page returned in
             // the metadata, and then Wings will panic crash as a result.

@@ -20,6 +20,7 @@ export const rawDataToFileObject = (data: FractalResponseData): FileObject => ({
     size: Number(data.attributes.size),
     isFile: data.attributes.is_file,
     isSymlink: data.attributes.is_symlink,
+    isProtected: !!data.attributes.is_protected,
     mimetype: data.attributes.mimetype,
     createdAt: new Date(data.attributes.created_at),
     modifiedAt: new Date(data.attributes.modified_at),

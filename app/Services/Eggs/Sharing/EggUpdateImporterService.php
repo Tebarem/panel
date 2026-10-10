@@ -2,6 +2,7 @@
 
 namespace Pterodactyl\Services\Eggs\Sharing;
 
+use Illuminate\Support\Arr;
 use Pterodactyl\Models\Egg;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
@@ -36,7 +37,7 @@ class EggUpdateImporterService
                 EggVariable::unguarded(function () use ($egg, $variable) {
                     $egg->variables()->updateOrCreate([
                         'env_variable' => $variable['env_variable'],
-                    ], Collection::make($variable)->except('egg_id', 'env_variable')->toArray());
+                    ], Collection::make(Arr::only($variable, EggVariable::IMPORTABLE_FIELDS))->except('env_variable')->toArray());
                 });
             }
 

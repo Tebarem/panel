@@ -36,7 +36,7 @@ class EggParserService
      */
     public function fillFromParsed(Egg $model, array $parsed): Egg
     {
-        return $model->forceFill([
+        $attributes = [
             'name' => Arr::get($parsed, 'name'),
             'description' => Arr::get($parsed, 'description'),
             'features' => Arr::get($parsed, 'features'),
@@ -52,7 +52,18 @@ class EggParserService
             'script_install' => Arr::get($parsed, 'scripts.installation.script'),
             'script_entry' => Arr::get($parsed, 'scripts.installation.entrypoint'),
             'script_container' => Arr::get($parsed, 'scripts.installation.container'),
-        ]);
+        ];
+
+        // Exports made before "file_hidden" existed do not contain the key. In that case the
+        // existing hidden rules are left untouched rather than being cleared.
+        if (array_key_exists('file_hidden', $parsed)) {
+            $attributes['file_hidden'] = Collection::make(is_array($parsed['file_hidden']) ? $parsed['file_hidden'] : [])
+                ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+                ->values()
+                ->all();
+        }
+
+        return $model->forceFill($attributes);
     }
 
     /**

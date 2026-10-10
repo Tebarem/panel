@@ -41,7 +41,7 @@ class EggImporterService
             $egg->save();
 
             foreach ($parsed['variables'] ?? [] as $variable) {
-                EggVariable::query()->forceCreate(array_merge($variable, ['egg_id' => $egg->id]));
+                EggVariable::query()->forceCreate(array_merge(Arr::only($variable, EggVariable::IMPORTABLE_FIELDS), ['egg_id' => $egg->id]));
             }
 
             return $egg;

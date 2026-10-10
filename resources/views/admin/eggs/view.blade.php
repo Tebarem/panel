@@ -51,6 +51,16 @@
         </div>
     </div>
 </form>
+<div class="row">
+    <div class="col-xs-12">
+        @if($egg->egg_source_id)
+            <div class="alert alert-info">
+                This Egg is synchronized from an <a href="{{ route('admin.egg-sources.view', $egg->egg_source_id) }}">Egg Source</a>.
+                Changes made here will be overwritten the next time the source syncs. Make changes in the repository instead.
+            </div>
+        @endif
+    </div>
+</div>
 <form action="{{ route('admin.nests.egg.view', $egg->id) }}" method="POST">
     <div class="row">
         <div class="col-xs-12">
@@ -84,6 +94,19 @@
                                     will be able to select from this list of images if more than one value is provided.
                                     Optionally, a display name may be provided by prefixing the image with the name
                                     followed by a pipe character, and then the image URL. Example: <code>Display Name|ghcr.io/my/egg</code>
+                                </p>
+                            </div>
+                            <div class="form-group">
+                                <label for="pDockerRegistry" class="control-label">Docker Registry (optional)</label>
+                                <select name="docker_registry_id" id="pDockerRegistry" class="form-control">
+                                    <option value="" {{ is_null($egg->docker_registry_id) ? 'selected' : '' }}>None</option>
+                                    @foreach($registries as $registry)
+                                        <option value="{{ $registry->id }}" {{ $egg->docker_registry_id === $registry->id ? 'selected' : '' }}>{{ $registry->name }} ({{ $registry->registry }})</option>
+                                    @endforeach
+                                </select>
+                                <p class="text-muted small">
+                                    Credentials for a private Docker registry, used to pull the images for servers using this Egg. Manage registries under
+                                    <a href="{{ route('admin.registries') }}">Registries</a>. Credentials are only sent to Wings for images that belong to the registry.
                                 </p>
                             </div>
                             <div class="form-group">
@@ -124,6 +147,34 @@
                                     </select>
                                     <p class="text-muted small">Additional features belonging to the egg. Useful for configuring additional panel modifications.</p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="pFileHidden" class="control-label">Hidden Files</label>
+                                <textarea id="pFileHidden" name="file_hidden" class="form-control" rows="6">{{ implode(PHP_EOL, $egg->file_hidden ?? []) }}</textarea>
+                                <p class="text-muted small">
+                                    Files matching these patterns are completely hidden from users going through Wings. They are not listed in the file manager,
+                                    cannot be read, downloaded, modified, or included in backups, and requests for them behave as if they do not exist.
+                                    Enter one gitignore-style pattern per line, relative to the server root (for example <code>/secrets/</code> or <code>*.key</code>).
+                                    The server process itself is not affected.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="form-group">
+                                <label for="pFileDenylist" class="control-label">Protected Files</label>
+                                <textarea id="pFileDenylist" name="file_denylist" class="form-control" rows="6">{{ implode(PHP_EOL, $egg->file_denylist ?? []) }}</textarea>
+                                <p class="text-muted small">
+                                    Files matching these patterns remain visible in the file manager, but are locked. They cannot be read, downloaded, edited,
+                                    renamed, moved, deleted, or included in user archives and backups. Uses the same pattern syntax as Hidden Files.
+                                    A file matching both lists is treated as hidden.
+                                </p>
+                                <p class="text-muted small">
+                                    If this Egg copies its configuration from another Egg, the file rules of that Egg are used and these fields are ignored.
+                                </p>
                             </div>
                         </div>
                     </div>

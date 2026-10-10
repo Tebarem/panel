@@ -64,6 +64,7 @@ class EggTransformer extends BaseTransformer
                 'stop' => $model->config_stop,
                 'logs' => json_decode($model->config_logs, true),
                 'file_denylist' => $model->file_denylist,
+                'file_hidden' => $model->file_hidden,
                 'extends' => $model->config_from,
             ],
             'startup' => $model->startup,

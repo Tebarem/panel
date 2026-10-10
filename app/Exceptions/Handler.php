@@ -43,6 +43,7 @@ class Handler extends ExceptionHandler
         RecordNotFoundException::class,
         TokenMismatchException::class,
         ValidationException::class,
+        \League\OAuth2\Server\Exception\OAuthServerException::class,
     ];
 
     /**
@@ -245,6 +246,15 @@ class Handler extends ExceptionHandler
      */
     protected function unauthenticated($request, AuthenticationException $exception): JsonResponse|RedirectResponse
     {
+        // Token-authenticated OAuth requests (/oauth/userinfo) are never redirected to the login page.
+        if (in_array('oauth', $exception->guards(), true)) {
+            return new JsonResponse(
+                $this->convertExceptionToArray($exception),
+                JsonResponse::HTTP_UNAUTHORIZED,
+                ['WWW-Authenticate' => 'Bearer'],
+            );
+        }
+
         if ($request->expectsJson()) {
             return new JsonResponse($this->convertExceptionToArray($exception), JsonResponse::HTTP_UNAUTHORIZED);
         }

@@ -4,6 +4,8 @@ namespace Pterodactyl\Services\Servers;
 
 use Pterodactyl\Models\Mount;
 use Pterodactyl\Models\Server;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\Encryption\DecryptException;
 
 class ServerConfigurationStructureService
 {
@@ -68,6 +70,7 @@ class ServerConfigurationStructureService
                 // TODO: remove this key in V2.
                 'oom_disabled' => $server->oom_disabled,
                 'requires_rebuild' => false,
+                'registry_auth' => $this->getRegistryAuth($server),
             ],
             'allocations' => [
                 'force_outgoing_ip' => $server->egg->force_outgoing_ip,
@@ -86,7 +89,42 @@ class ServerConfigurationStructureService
             }),
             'egg' => [
                 'id' => $server->egg->uuid,
-                'file_denylist' => $server->egg->inherit_file_denylist,
+                'file_denylist' => $server->egg->inherit_file_denylist ?? [],
+                'file_hidden' => $server->egg->inherit_file_hidden ?? [],
+            ],
+        ];
+    }
+
+    /**
+     * Returns the registry credentials Wings should use when pulling the container image for
+     * this server. The password is only ever included in this structure, which is sent to Wings;
+     * it must never be added to any API transformer, view, export or log.
+     *
+     * @return array<int, array{registry: string, username: string, password: string}>
+     */
+    protected function getRegistryAuth(Server $server): array
+    {
+        $registry = $server->egg->dockerRegistry;
+        if (is_null($registry)) {
+            return [];
+        }
+
+        try {
+            // Reading the password decrypts it; this fails if APP_KEY changed or the value is corrupt.
+            $password = $registry->password;
+        } catch (DecryptException) {
+            Log::error('Unable to decrypt the password for a Docker registry; the registry credentials will not be sent to Wings.', [
+                'registry_id' => $registry->id,
+            ]);
+
+            return [];
+        }
+
+        return [
+            [
+                'registry' => $registry->registry,
+                'username' => $registry->username,
+                'password' => $password,
             ],
         ];
     }

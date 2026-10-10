@@ -6,11 +6,13 @@ use Illuminate\View\View;
 use Pterodactyl\Models\Egg;
 use Illuminate\Http\RedirectResponse;
 use Prologue\Alerts\AlertsMessageBag;
+use Pterodactyl\Models\DockerRegistry;
 use Illuminate\View\Factory as ViewFactory;
 use Pterodactyl\Http\Controllers\Controller;
 use Pterodactyl\Services\Eggs\EggUpdateService;
 use Pterodactyl\Services\Eggs\EggCreationService;
 use Pterodactyl\Services\Eggs\EggDeletionService;
+use Pterodactyl\Services\Eggs\EggServerSyncService;
 use Pterodactyl\Http\Requests\Admin\Egg\EggFormRequest;
 use Pterodactyl\Contracts\Repository\EggRepositoryInterface;
 use Pterodactyl\Contracts\Repository\NestRepositoryInterface;
@@ -25,6 +27,7 @@ class EggController extends Controller
         protected EggCreationService $creationService,
         protected EggDeletionService $deletionService,
         protected EggRepositoryInterface $repository,
+        protected EggServerSyncService $serverSyncService,
         protected EggUpdateService $updateService,
         protected NestRepositoryInterface $nestRepository,
         protected ViewFactory $view,
@@ -41,7 +44,10 @@ class EggController extends Controller
         $nests = $this->nestRepository->getWithEggs();
         \JavaScript::put(['nests' => $nests->keyBy('id')]);
 
-        return view('admin.eggs.new', ['nests' => $nests]);
+        return view('admin.eggs.new', [
+            'nests' => $nests,
+            'registries' => DockerRegistry::query()->orderBy('name')->get(),
+        ]);
     }
 
     /**
@@ -68,6 +74,7 @@ class EggController extends Controller
     {
         return view('admin.eggs.view', [
             'egg' => $egg,
+            'registries' => DockerRegistry::query()->orderBy('name')->get(),
             'images' => array_map(
                 fn ($key, $value) => $key === $value ? $value : "$key|$value",
                 array_keys($egg->docker_images),
@@ -88,7 +95,17 @@ class EggController extends Controller
         $data = $request->validated();
         $data['docker_images'] = $this->normalizeDockerImages($data['docker_images'] ?? null);
 
+        $fingerprint = EggServerSyncService::fingerprint($egg);
+
         $this->updateService->handle($egg, $data);
+
+        // Wings only reads file rules and registry credentials when a server is synced, so push
+        // the change to every server using this egg if any of those values were modified.
+        $egg->refresh();
+        if ($fingerprint !== EggServerSyncService::fingerprint($egg)) {
+            $this->serverSyncService->handle([$egg->id]);
+        }
+
         $this->alert->success(trans('admin/nests.eggs.notices.updated'))->flash();
 
         return redirect()->route('admin.nests.egg.view', $egg->id);

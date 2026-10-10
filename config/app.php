@@ -197,6 +197,7 @@ return [
         Pterodactyl\Providers\BladeServiceProvider::class,
         Pterodactyl\Providers\EventServiceProvider::class,
         Pterodactyl\Providers\HashidsServiceProvider::class,
+        Pterodactyl\Providers\OAuthServiceProvider::class,
         Pterodactyl\Providers\RouteServiceProvider::class,
         Pterodactyl\Providers\RepositoryServiceProvider::class,
         Pterodactyl\Providers\ViewComposerServiceProvider::class,

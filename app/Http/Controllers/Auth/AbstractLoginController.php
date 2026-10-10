@@ -2,6 +2,7 @@
 
 namespace Pterodactyl\Http\Controllers\Auth;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Pterodactyl\Models\User;
 use Illuminate\Auth\AuthManager;
@@ -79,15 +80,67 @@ abstract class AbstractLoginController extends Controller
 
         $this->auth->guard()->login($user, true);
 
+        // Used as "auth_time" when an OpenID Connect ID token is issued for this session.
+        $request->session()->put('auth.authenticated_at', CarbonImmutable::now()->getTimestamp());
+
         Event::dispatch(new DirectLogin($user, true));
 
         return new JsonResponse([
             'data' => [
                 'complete' => true,
-                'intended' => $this->redirectPath(),
+                'intended' => $this->resolveIntendedUrl($request),
                 'user' => $user->toVueObject(),
             ],
         ]);
+    }
+
+    /**
+     * Returns the URL to send the user to after signing in. This is the URL that was intended before the
+     * login redirect (e.g. an /oauth/authorize request). It is only honoured when it points at this panel.
+     *
+     * An absolute URL is accepted when its host and port match APP_URL, ignoring the scheme (a TLS-terminating
+     * proxy may report http:// for an https:// panel). Only its path and query are returned, so the browser
+     * always stays on this origin. Anything else falls back to the dashboard.
+     */
+    protected function resolveIntendedUrl(Request $request): string
+    {
+        $intended = $request->session()->pull('url.intended');
+
+        if (!is_string($intended) || $intended === '') {
+            return '/';
+        }
+
+        // Backslashes, whitespace and control characters have no place in a URL we send the browser to.
+        if (str_contains($intended, '\\') || preg_match('/[^\x21-\x7E]/', $intended) === 1) {
+            return '/';
+        }
+
+        // Path-only values stay on this host. "//host" would be protocol-relative, so it is rejected.
+        if (str_starts_with($intended, '/')) {
+            return str_starts_with($intended, '//') ? '/' : $intended;
+        }
+
+        $target = parse_url($intended);
+        $app = parse_url((string) config('app.url'));
+
+        if (!is_array($target) || !is_array($app) || !isset($target['scheme'], $target['host'], $app['host'])) {
+            return '/';
+        }
+
+        if (!in_array(strtolower($target['scheme']), ['http', 'https'], true)) {
+            return '/';
+        }
+
+        if (strtolower($target['host']) !== strtolower($app['host']) || ($target['port'] ?? null) !== ($app['port'] ?? null)) {
+            return '/';
+        }
+
+        $path = $target['path'] ?? '/';
+        if (!str_starts_with($path, '/') || str_starts_with($path, '//')) {
+            return '/';
+        }
+
+        return $path . (isset($target['query']) ? '?' . $target['query'] : '');
     }
 
     /**

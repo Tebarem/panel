@@ -57,6 +57,21 @@ class EggVariable extends Model
     /**
      * Cast values to correct type.
      */
+    /**
+     * The only keys accepted from an imported egg file. Anything else in the file (such as
+     * "egg_id" or "id") is ignored so an import cannot re-parent or overwrite unrelated rows.
+     */
+    public const IMPORTABLE_FIELDS = [
+        'name',
+        'description',
+        'env_variable',
+        'default_value',
+        'user_viewable',
+        'user_editable',
+        'rules',
+        'sort',
+    ];
+
     protected $casts = [
         'egg_id' => 'integer',
         'user_viewable' => 'bool',

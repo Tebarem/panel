@@ -13,7 +13,10 @@ class EggFormRequest extends AdminFormRequest
             'description' => 'nullable|string',
             'docker_images' => ['required', 'string', 'regex:/^[\w#\.\/\- ]*\|?~?[\w\.\/\-:@ ]*$/im'],
             'force_outgoing_ip' => 'sometimes|boolean',
-            'file_denylist' => 'array',
+            // Submitted as newline-separated textareas, converted to arrays in validated().
+            'file_denylist' => 'sometimes|nullable|string|max:65535',
+            'file_hidden' => 'sometimes|nullable|string|max:65535',
+            'docker_registry_id' => 'sometimes|nullable|numeric|exists:docker_registries,id',
             'features' => 'sometimes|array',
             'startup' => 'required|string',
             'config_from' => 'sometimes|bail|nullable|numeric',
@@ -41,9 +44,33 @@ class EggFormRequest extends AdminFormRequest
     {
         $data = parent::validated();
 
+        foreach (['file_denylist', 'file_hidden'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $data[$field] = self::parsePatterns($data[$field]);
+            }
+        }
+
+        // An empty select means "no registry", which is stored as NULL rather than 0 or "".
+        if (array_key_exists('docker_registry_id', $data)) {
+            $data['docker_registry_id'] = $data['docker_registry_id'] ?: null;
+        }
+
         return array_merge($data, [
             'force_outgoing_ip' => array_get($data, 'force_outgoing_ip', false),
             'features' => array_get($data, 'features', []),
         ]);
+    }
+
+    /**
+     * Converts a newline separated list of file patterns into an array of unique, non-empty
+     * patterns with surrounding whitespace removed.
+     *
+     * @return string[]
+     */
+    public static function parsePatterns(?string $input): array
+    {
+        $lines = preg_split('/\R/', (string) $input) ?: [];
+
+        return array_values(array_unique(array_filter(array_map('trim', $lines), fn ($line) => $line !== '')));
     }
 }
