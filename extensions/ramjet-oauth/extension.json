@@ -1,0 +1,37 @@
+{
+    "$schema": "../../packages/sdk/manifest.schema.json",
+    "id": "ramjet-oauth",
+    "name": "Ramjet OAuth",
+    "version": "1.0.0",
+    "requires": {
+        "panel": "^2.0.0-dev",
+        "sdk": "^2.0.0-beta.4",
+        "php": "^8.3"
+    },
+    "description": "OAuth 2.0 and OpenID Connect provider: sign in with this panel from other applications.",
+    "provider": "Ramjet\\OAuth\\RamjetOAuthProvider",
+    "autoload": {
+        "Ramjet\\OAuth\\": "src"
+    },
+    "routes": {
+        "root": [
+            "oauth"
+        ]
+    },
+    "ui": {
+        "entry": "dist/client.js",
+        "mode": "native",
+        "prefix": "rjo",
+        "screens": [
+            {
+                "id": "clients",
+                "area": "admin",
+                "path": "oauth-apps",
+                "nav": {
+                    "label": "OAuth Apps",
+                    "icon": "key"
+                }
+            }
+        ]
+    }
+}

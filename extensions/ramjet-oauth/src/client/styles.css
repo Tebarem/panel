@@ -1,0 +1,8 @@
+/*
+ * The panel and every extension build Tailwind with their own prefix (ui.prefix in extension.json),
+ * so these utilities (`rjo:flex`, `rjo:text-muted-foreground`) never collide with another build.
+ */
+@import 'tailwindcss/theme.css' layer(theme) prefix(rjo);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(rjo);
+@import '../../../../packages/sdk/theme.css';
+@source './**/*.{ts,tsx}';

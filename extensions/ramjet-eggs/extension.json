@@ -1,0 +1,42 @@
+{
+    "$schema": "../../packages/sdk/manifest.schema.json",
+    "id": "ramjet-eggs",
+    "name": "Ramjet Eggs",
+    "version": "1.0.0",
+    "description": "Hidden and protected file rules, per-egg Docker registry credentials and egg sources synced from catalogs.",
+    "author": "Ramjet",
+    "provider": "Ramjet\\Eggs\\RamjetEggsProvider",
+    "autoload": {
+        "Ramjet\\Eggs\\": "src"
+    },
+    "requires": {
+        "panel": "^2.0.0-dev",
+        "sdk": "^2.0.0-beta.4",
+        "php": "^8.3"
+    },
+    "ui": {
+        "entry": "dist/client.js",
+        "mode": "native",
+        "prefix": "rjeggs",
+        "screens": [
+            {
+                "id": "registries",
+                "area": "admin",
+                "path": "registries",
+                "nav": {
+                    "label": "Registries",
+                    "icon": "container"
+                }
+            },
+            {
+                "id": "sources",
+                "area": "admin",
+                "path": "egg-sources",
+                "nav": {
+                    "label": "Egg Sources",
+                    "icon": "download"
+                }
+            }
+        ]
+    }
+}
