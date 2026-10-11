@@ -80,7 +80,7 @@ parameters:
         ApiPayload: 'array<string, ApiValue10>'
         ApiPayload9: 'array<string, ApiValue9>'
         FractalTransformedPayload: 'array{relationships?: array<string, ApiValue9>, ...<string, ApiValue9>}'
-        DaemonFileObject: 'array{name?: string, mode?: string, mode_bits?: string, size?: int, file?: bool, symlink?: bool, mime?: string, created?: string, modified?: string}'
+        DaemonFileObject: 'array{name?: string, mode?: string, mode_bits?: string, size?: int, file?: bool, symlink?: bool, protected?: bool, mime?: string, created?: string, modified?: string}'
         DaemonStats: 'array{state?: string, is_suspended?: bool, utilization?: array{memory_bytes?: int, cpu_absolute?: float|int, disk_bytes?: int, network?: array{rx_bytes?: int, tx_bytes?: int}, uptime?: int}}'
         DatabaseCreationData: 'array{database: string, remote: string, database_host_id: int, max_connections?: int|null}'
         DatabaseDeploymentData: 'array{database: string, remote: string, database_host_id?: int|null, max_connections?: int|null}'

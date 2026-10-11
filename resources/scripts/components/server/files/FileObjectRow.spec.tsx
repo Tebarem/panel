@@ -6,6 +6,7 @@ import type * as Registry from '@/extensions/registry';
 import type * as Testing from '@/sdk/testing';
 import type FileObjectRow from './FileObjectRow';
 import type { FileRowActionsProvider } from './useFileActions';
+import { PROTECTED_FILE_TOOLTIP } from './protectedFiles';
 
 let host: { dispose(): void } | undefined;
 let registry: typeof Registry;
@@ -43,20 +44,21 @@ const file: FileObject = {
         size: 1024,
         is_file: true,
         is_symlink: false,
+        is_protected: false,
         mimetype: 'application/json',
         created_at: '2026-01-01T12:00:00Z',
         modified_at: '2026-01-01T12:00:00Z',
     },
 };
 
-function renderRow(owner = true) {
+function renderRow(owner = true, target: FileObject = file) {
     const { createExtensionTestHost, createTestServer } = testing;
     const mounted = createExtensionTestHost({ server: createTestServer({ owner, permissions: [] }) });
 
     host = mounted;
     render(
         <RowActions>
-            <Row file={file} />
+            <Row file={target} />
         </RowActions>,
         { wrapper: mounted.Wrapper }
     );
@@ -116,4 +118,16 @@ it('restores native details after a renderer failure with core controls intact',
     expect(screen.getByRole('link', { name: 'config.json' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Open file options' })).toBeVisible();
     expect(registry.getExtensionStates().find((state) => state.id === 'details')?.error).toContain('bad details');
+});
+
+it('shows a protected file as locked with no editor link, no selection and only a disabled menu item', async () => {
+    renderRow(true, { ...file, attributes: { ...file.attributes, is_protected: true } });
+    expect(await screen.findByRole('img', { name: PROTECTED_FILE_TOOLTIP })).toBeVisible();
+    expect(screen.queryByRole('link', { name: 'config.json' })).not.toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Select config.json' })).toHaveAttribute('aria-disabled', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open file options' }));
+    expect(await screen.findByRole('menuitem', { name: /Protected/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.queryByRole('menuitem', { name: /Delete/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: /Rename/ })).not.toBeInTheDocument();
 });

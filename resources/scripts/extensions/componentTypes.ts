@@ -83,6 +83,8 @@ export interface FileManagerEntry {
     readonly modifiedAt: string;
     /** open() leads somewhere: a directory, or a text file this user may read. */
     readonly openable: boolean;
+    /** Wings protects this entry: it cannot be modified, moved, deleted, renamed, archived, copied, downloaded or selected. */
+    readonly isProtected: boolean;
 }
 export interface FileManagerPermissions {
     readonly create: boolean;

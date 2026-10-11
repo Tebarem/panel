@@ -42,6 +42,7 @@ type PartProps = ComponentPartProps<'server.files.manager'>;
 function Toolbar({ model }: PartProps) {
     const id = useCurrentServerIdentifier()!;
     const extensionData = useFileManagerExtensionData();
+    const selectable = model.entries.filter((entry) => !entry.isProtected);
 
     return (
         <ErrorBoundary>
@@ -50,10 +51,11 @@ function Toolbar({ model }: PartProps) {
                     <Checkbox
                         className='mx-4'
                         aria-label='Select all files'
-                        checked={model.entries.length > 0 && model.selection.length === model.entries.length}
-                        indeterminate={model.selection.length > 0 && model.selection.length < model.entries.length}
+                        disabled={selectable.length === 0}
+                        checked={selectable.length > 0 && model.selection.length === selectable.length}
+                        indeterminate={model.selection.length > 0 && model.selection.length < selectable.length}
                         onChange={(checked) =>
-                            model.actions.select(checked ? model.entries.map((entry) => entry.name) : [])
+                            model.actions.select(checked ? selectable.map((entry) => entry.name) : [])
                         }
                     />
                 </FileManagerBreadcrumbs>

@@ -28,6 +28,12 @@ import type { FileManagerEntry, FileManagerModel } from '@/extensions/componentT
 import type { FileManagerSlotData } from '@/extensions/registry';
 import type { FileManagerSession } from './FileManagerView';
 import useFileUploader from './useFileUploader';
+import {
+    PROTECTED_FILE_TOOLTIP,
+    PROTECTED_FILE_UPLOAD_ERROR,
+    partitionProtected,
+    protectedFileNames,
+} from './protectedFiles';
 
 export const FILE_LIST_LIMIT = 250;
 
@@ -45,6 +51,12 @@ const sortFiles = (files: FileObject[]): FileObject[] => {
 function allow(granted: boolean, permission: string): void {
     if (!granted) {
         throw new Error(`This action requires the ${permission} permission.`);
+    }
+}
+
+function refuseProtected(names: readonly string[], protectedNames: ReadonlySet<string>): void {
+    if (names.some((name) => protectedNames.has(name))) {
+        throw new Error(PROTECTED_FILE_TOOLTIP);
     }
 }
 
@@ -72,6 +84,7 @@ export default function useFileManagerModel(data: FileManagerSlotData, listed: b
     const upload = useFileUploader();
 
     const files = useMemo(() => sortFiles(data.files.slice(0, FILE_LIST_LIMIT)), [data.files]);
+    const protectedNames = useMemo(() => protectedFileNames(data.files), [data.files]);
     const entries = useMemo(
         () =>
             files.map<FileManagerEntry>((file) => ({
@@ -83,7 +96,10 @@ export default function useFileManagerModel(data: FileManagerSlotData, listed: b
                 mode: file.attributes.mode ?? '',
                 modeBits: file.attributes.mode_bits ?? '',
                 modifiedAt: file.attributes.modified_at,
-                openable: file.attributes.is_file ? isFileObjectEditable(file) && canReadContent : canRead,
+                isProtected: file.attributes.is_protected,
+                openable:
+                    !file.attributes.is_protected &&
+                    (file.attributes.is_file ? isFileObjectEditable(file) && canReadContent : canRead),
             })),
         [files, directory, canRead, canReadContent]
     );
@@ -130,6 +146,10 @@ export default function useFileManagerModel(data: FileManagerSlotData, listed: b
             },
             rename: async (renamed) => {
                 allow(canUpdate, 'file.update');
+                refuseProtected(
+                    renamed.map(({ from }) => from),
+                    protectedNames
+                );
                 await renameFiles(
                     renameFilesInput(
                         uuid,
@@ -141,25 +161,33 @@ export default function useFileManagerModel(data: FileManagerSlotData, listed: b
             },
             remove: async (names) => {
                 allow(canDelete, 'file.delete');
+                refuseProtected(names, protectedNames);
                 await deleteFiles(deleteFilesInput(uuid, directory, [...names]));
                 clearSelectedFiles();
             },
             copy: async (name) => {
                 allow(canCreate, 'file.create');
+                refuseProtected([name], protectedNames);
                 await copyFile(copyFileInput(uuid, join(directory, name)));
             },
             archive: async (names) => {
                 allow(canArchive, 'file.archive');
+                refuseProtected(names, protectedNames);
                 await compressFiles(compressFilesInput(uuid, directory, [...names]));
                 clearSelectedFiles();
             },
             extract: async (name) => {
                 allow(canCreate, 'file.create');
                 allow(canUpdate, 'file.update');
+                refuseProtected([name], protectedNames);
                 await decompressFile(decompressFileInput(uuid, directory, name));
             },
             chmod: async (changed) => {
                 allow(canUpdate, 'file.update');
+                refuseProtected(
+                    changed.map(({ file }) => file),
+                    protectedNames
+                );
                 await chmodFiles(
                     chmodFilesInput(
                         uuid,
@@ -169,12 +197,23 @@ export default function useFileManagerModel(data: FileManagerSlotData, listed: b
                 );
             },
             download: async (name) => {
+                refuseProtected([name], protectedNames);
                 window.location.assign(await downloadUrl({ uuid, file: join(directory, name) }));
             },
             upload: async (uploaded) => {
                 allow(canCreate, 'file.create');
                 allow(canUpdate, 'file.update');
-                await upload(uploaded);
+
+                // Protected files are never overwritten: upload the rest, then report the skipped names.
+                const { skipped, uploadable } = partitionProtected(uploaded, protectedNames);
+
+                if (uploadable.length > 0) {
+                    await upload(uploadable);
+                }
+
+                if (skipped.length > 0) {
+                    throw new Error(PROTECTED_FILE_UPLOAD_ERROR + skipped.map((file) => file.name).join(', '));
+                }
             },
         };
     }, [
@@ -199,6 +238,7 @@ export default function useFileManagerModel(data: FileManagerSlotData, listed: b
         chmodFiles,
         downloadUrl,
         upload,
+        protectedNames,
     ]);
     const model = useMemo<FileManagerModel>(
         () => ({

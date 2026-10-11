@@ -23,8 +23,15 @@ function FileManagerContainerContent() {
 
     const setSelectedFiles = useServerStore((state) => state.files.setSelectedFiles);
     const storedSelection = useSelectedFiles();
+    // Protected entries are listed but never selectable, so they never join a selection.
     const listed = useMemo(
-        () => new Set(files?.data.slice(0, FILE_LIST_LIMIT).map((file) => file.attributes.name)),
+        () =>
+            new Set(
+                files?.data
+                    .slice(0, FILE_LIST_LIMIT)
+                    .filter((file) => !file.attributes.is_protected)
+                    .map((file) => file.attributes.name)
+            ),
         [files]
     );
     const selectedFiles = useMemo(() => {

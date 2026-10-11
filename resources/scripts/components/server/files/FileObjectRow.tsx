@@ -1,7 +1,7 @@
 import ComponentView from '@/extensions/ComponentView';
 import type { FileDetailsModel } from '@/extensions/componentTypes';
 import { DefaultFileDetails, FileDetailsContext, fileDetailsParts } from './FileDetailsView';
-import { MoreHorizontal } from 'lucide-react';
+import { Lock, MoreHorizontal } from 'lucide-react';
 import Icon from '@/components/elements/Icon';
 import { encodePathSegments } from '@/helpers';
 import React, { memo, useMemo } from 'react';
@@ -18,6 +18,7 @@ import { join } from 'pathe';
 import { cn } from '@/lib/cn';
 import Slot from '@/extensions/Slot';
 import useFileManagerExtensionData from './useFileManagerExtensionData';
+import { PROTECTED_FILE_TOOLTIP } from './protectedFiles';
 
 const fileRowClass =
     'flex items-center cursor-pointer bg-card rounded-xs mb-px text-sm no-underline hover:text-foreground hover:bg-popover';
@@ -37,7 +38,9 @@ const Clickable = memo(({ file, children }: ClickableProps) => {
 
     const hash = encodePathSegments(join(directory, attributes.name));
 
-    const openable = attributes.is_file ? isFileObjectEditable(file) && canReadContents : canRead;
+    // Protected entries are shown but never open: their editor and listing are not reachable from the row.
+    const openable =
+        !attributes.is_protected && (attributes.is_file ? isFileObjectEditable(file) && canReadContents : canRead);
 
     if (!openable) {
         return <div className={cn(detailsClass, 'cursor-default')}>{children}</div>;
@@ -93,7 +96,7 @@ const FileObjectRow = ({ file }: { file: FileObject }) => {
 
     return (
         <ContextDropdownMenu className={fileRowClass} menuClassName='w-64' items={actionItems}>
-            <SelectFileCheckbox name={attributes.name} />
+            <SelectFileCheckbox name={attributes.name} disabled={attributes.is_protected} />
             <Clickable file={file}>
                 <FileDetailsContext.Provider value={model}>
                     <ComponentView
@@ -109,6 +112,16 @@ const FileObjectRow = ({ file }: { file: FileObject }) => {
                     />
                 </FileDetailsContext.Provider>
             </Clickable>
+            {attributes.is_protected && (
+                <span
+                    role='img'
+                    aria-label={PROTECTED_FILE_TOOLTIP}
+                    title={PROTECTED_FILE_TOOLTIP}
+                    className='flex-none mr-2 text-muted-foreground'
+                >
+                    <Icon icon={Lock} className='h-4 w-4' />
+                </span>
+            )}
             <DropdownMenu
                 className='w-64'
                 triggerClassName='mr-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring'

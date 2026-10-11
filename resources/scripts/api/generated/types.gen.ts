@@ -1237,6 +1237,10 @@ export type ClientFileObjectAttributes = {
     size: number | null;
     is_file: boolean;
     is_symlink: boolean;
+    /**
+     * Protected files are reported by Wings and cannot be modified, moved, deleted, renamed or downloaded.
+     */
+    is_protected: boolean;
     mimetype: string;
     created_at: string;
     modified_at: string;

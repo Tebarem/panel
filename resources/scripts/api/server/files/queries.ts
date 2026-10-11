@@ -233,6 +233,7 @@ const generateDirectoryData = (name: string): ClientFileObjectResource => ({
         size: 0,
         is_file: false,
         is_symlink: false,
+        is_protected: false,
         mimetype: '',
         created_at: new Date().toISOString(),
         modified_at: new Date().toISOString(),

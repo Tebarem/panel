@@ -23,6 +23,7 @@ class FileObjectTransformer extends BaseClientTransformer
             'size' => $item['size'] ?? null,
             'is_file' => $item['file'] ?? true,
             'is_symlink' => $item['symlink'] ?? false,
+            'is_protected' => (bool) ($item['protected'] ?? false),
             'mimetype' => $item['mime'] ?? 'application/octet-stream',
             'created_at' => Date::parse($item['created'] ?? '')->toAtomString(),
             'modified_at' => Date::parse($item['modified'] ?? '')->toAtomString(),

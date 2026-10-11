@@ -26,6 +26,13 @@ test('directory listing is returned', function (): void {
     $this->actingAs($user)->getJson($this->link($server, '/files/list'))->assertOk()->assertJsonPath('object', 'list')->assertJsonPath('data.0.object', 'file_object')->assertJsonPath('data.0.attributes.name', 'test.txt')->assertJsonPath('data.0.attributes.is_file', true)->assertJsonPath('data.0.attributes.mimetype', 'text/plain');
     $fake->assertDirectoryListed('/');
 });
+test('protected entries reported by wings are flagged', function (): void {
+    [$user, $server] = $this->generateTestAccount([Permissions::FileRead->value]);
+    $fake = new FakeDaemonFile;
+    $fake->directory = [FILE_CONTROLLER_FILE_OBJECT, [...FILE_CONTROLLER_FILE_OBJECT, 'name' => 'locked.txt', 'protected' => true]];
+
+    $this->actingAs($user)->getJson($this->link($server, '/files/list'))->assertOk()->assertJsonPath('data.0.attributes.is_protected', false)->assertJsonPath('data.1.attributes.name', 'locked.txt')->assertJsonPath('data.1.attributes.is_protected', true);
+});
 test('directory query parameter is passed to wings', function (): void {
     [$user, $server] = $this->generateTestAccount([Permissions::FileRead->value]);
     $fake = new FakeDaemonFile;

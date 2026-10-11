@@ -6,6 +6,15 @@ import Portal from '@/components/elements/Portal';
 import { CloudUpload } from 'lucide-react';
 import { useDialogState } from '@/components/elements/dialog';
 import useFileUploader from '@/components/server/files/useFileUploader';
+import { useServerFiles } from '@/api/server/files/queries';
+import { useCurrentServerUuid } from '@/api/server/queries';
+import { useServerDirectory } from '@/state/server';
+import { toast } from 'sonner';
+import {
+    PROTECTED_FILE_UPLOAD_ERROR,
+    partitionProtected,
+    protectedFileNames,
+} from '@/components/server/files/protectedFiles';
 
 function isFileOrDirectory(event: DragEvent): boolean {
     if (!event.dataTransfer?.types) {
@@ -20,6 +29,9 @@ export default function UploadButton({ className }: WithClassname) {
 
     const dropOverlay = useDialogState();
     const upload = useFileUploader();
+    const uuid = useCurrentServerUuid()!;
+    const directory = useServerDirectory();
+    const { data: listing } = useServerFiles(uuid, directory);
 
     useEventListener(
         'dragenter',
@@ -38,8 +50,20 @@ export default function UploadButton({ className }: WithClassname) {
     useEventListener('keydown', dropOverlay.hide);
 
     const onFileSubmission = (files: FileList) => {
+        // Protected files are never overwritten: report them and upload the rest.
+        const protectedNames = protectedFileNames(listing?.data ?? []);
+        const { skipped, uploadable } = partitionProtected([...files], protectedNames);
+
+        if (skipped.length > 0) {
+            toast.error(PROTECTED_FILE_UPLOAD_ERROR + skipped.map((file) => file.name).join(', '));
+        }
+
+        if (uploadable.length === 0) {
+            return;
+        }
+
         // Failures have already been reported with error toasts.
-        upload([...files]).catch(() => {});
+        upload(uploadable).catch(() => {});
     };
 
     return (

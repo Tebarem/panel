@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Pterodactyl\Services\Servers;
 
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
+use Pterodactyl\Contracts\Servers\ContributesToServerConfiguration;
 use Pterodactyl\Models\Allocation;
 use Pterodactyl\Models\Egg;
 use Pterodactyl\Models\Mount;
@@ -14,9 +17,17 @@ use UnexpectedValueException;
 class ServerConfigurationStructureService
 {
     /**
+     * Container tag for services implementing ContributesToServerConfiguration.
+     */
+    public const CONTRIBUTORS_TAG = 'pterodactyl.server-configuration.contributors';
+
+    /**
      * ServerConfigurationStructureService constructor.
      */
-    public function __construct(private readonly EnvironmentService $environment) {}
+    public function __construct(
+        private readonly EnvironmentService $environment,
+        private readonly Container $container,
+    ) {}
 
     /**
      * Return a configuration array for a specific server when passed a server model.
@@ -55,7 +66,7 @@ class ServerConfigurationStructureService
      */
     protected function returnCurrentFormat(Server $server, Egg $egg, Allocation $allocation): array
     {
-        return [
+        return $this->applyContributors($server, [
             'uuid' => $server->uuid,
             'meta' => [
                 'name' => $server->name,
@@ -99,7 +110,7 @@ class ServerConfigurationStructureService
                 'id' => $egg->uuid,
                 'file_denylist' => $egg->inherit_file_denylist,
             ],
-        ];
+        ]);
     }
 
     /**
@@ -143,5 +154,36 @@ class ServerConfigurationStructureService
             'rebuild' => false,
             'suspended' => $server->isSuspended() ? 1 : 0,
         ];
+    }
+
+    /**
+     * Passes the configuration through every tagged contributor in registration order.
+     *
+     * @param  array<string, JsonValue>  $configuration
+     * @return array<string, JsonValue>
+     */
+    private function applyContributors(Server $server, array $configuration): array
+    {
+        // SAFETY: the container resolves every tagged binding to a class instance, so each item is an object.
+        /** @var iterable<object> $contributors */
+        $contributors = $this->container->tagged(self::CONTRIBUTORS_TAG);
+
+        foreach ($contributors as $contributor) {
+            // A misregistered service is skipped rather than failing every server's Wings configuration.
+            if (! $contributor instanceof ContributesToServerConfiguration) {
+                Log::error('Skipping server configuration contributor that does not implement the contract.', [
+                    'tag' => self::CONTRIBUTORS_TAG,
+                    'expected' => ContributesToServerConfiguration::class,
+                    'received' => $contributor::class,
+                ]);
+
+                continue;
+            }
+
+            // Exceptions thrown by a contributor propagate: contributors own their failure mode.
+            $configuration = $contributor->contribute($server, $configuration);
+        }
+
+        return $configuration;
     }
 }

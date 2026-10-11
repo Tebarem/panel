@@ -297,6 +297,7 @@ export function createTestFileManagerEntry(options: Partial<FileManagerEntry> = 
         modeBits: '0644',
         modifiedAt: '2026-01-01T12:00:00Z',
         openable: true,
+        isProtected: false,
         ...options,
     };
 }
@@ -413,6 +414,7 @@ export function createComponentTestHost(
                 size: entry.size,
                 is_file: entry.kind !== 'directory',
                 is_symlink: entry.kind === 'symlink',
+                is_protected: entry.isProtected,
                 mimetype: entry.mimetype,
                 created_at: entry.modifiedAt,
                 modified_at: entry.modifiedAt,

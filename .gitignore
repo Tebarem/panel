@@ -45,7 +45,11 @@ result
 /examples/*/dist
 
 # Local extension development checkouts
-/extensions/
+/extensions/*
+!/extensions/ramjet-oauth/
+!/extensions/ramjet-eggs/
+/extensions/ramjet-oauth/vendor/
+/extensions/ramjet-eggs/vendor/
 
 # Generated SDK test host bundles
 /packages/sdk/testing-runtime/

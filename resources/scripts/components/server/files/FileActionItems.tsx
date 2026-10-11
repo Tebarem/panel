@@ -1,7 +1,8 @@
-import { PackageOpen, Copy, FileArchive, FileCode, FileDown, CornerLeftUp, Pencil, Trash2 } from 'lucide-react';
+import { PackageOpen, Copy, FileArchive, FileCode, FileDown, CornerLeftUp, Lock, Pencil, Trash2 } from 'lucide-react';
 import Can from '@/components/elements/Can';
 import { DropdownMenuItem } from '@/components/elements/dropdown/DropdownMenu';
 import { isFileObjectArchiveType, type FileObject } from '@/api/server/files/queries';
+import { PROTECTED_FILE_TOOLTIP } from '@/components/server/files/protectedFiles';
 
 interface Props {
     file: FileObject;
@@ -27,6 +28,14 @@ export default function FileActionItems({
     onDelete,
 }: Props) {
     const { attributes } = file;
+
+    if (attributes.is_protected) {
+        return (
+            <DropdownMenuItem disabled icon={Lock} description={PROTECTED_FILE_TOOLTIP}>
+                Protected
+            </DropdownMenuItem>
+        );
+    }
 
     return (
         <>

@@ -53,6 +53,7 @@ use Throwable;
 #[ResponseField('attributes.mode', nullable: true)]
 #[ResponseField('attributes.mode_bits', nullable: true)]
 #[ResponseField('attributes.size', 'integer', nullable: true)]
+#[ResponseField('attributes.is_protected', 'boolean', description: 'Protected files are reported by Wings and cannot be modified, moved, deleted, renamed or downloaded.')]
 class FileController extends ClientApiController
 {
     private const array FILE_OBJECT_EXAMPLE = [
@@ -64,6 +65,7 @@ class FileController extends ClientApiController
             'size' => 1024,
             'is_file' => true,
             'is_symlink' => false,
+            'is_protected' => false,
             'mimetype' => 'text/plain',
             'created_at' => '2026-06-29T12:00:00+00:00',
             'modified_at' => '2026-06-29T12:00:00+00:00',
@@ -79,6 +81,7 @@ class FileController extends ClientApiController
             'size' => 4096,
             'is_file' => true,
             'is_symlink' => false,
+            'is_protected' => false,
             'mimetype' => 'application/gzip',
             'created_at' => '2026-06-29T12:00:00+00:00',
             'modified_at' => '2026-06-29T12:00:00+00:00',

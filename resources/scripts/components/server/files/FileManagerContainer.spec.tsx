@@ -7,8 +7,10 @@ import type { ComponentReplacement, ReplacementProps } from '@/extensions/compon
 import type * as Registry from '@/extensions/registry';
 import type * as Testing from '@/sdk/testing';
 import type * as Http from '@/api/http';
+import { toast } from 'sonner';
 import type FileManagerContainer from './FileManagerContainer';
 import type SelectFileCheckbox from './SelectFileCheckbox';
+import { PROTECTED_FILE_TOOLTIP } from './protectedFiles';
 
 const rowRenders = new Map<string, number>();
 
@@ -21,7 +23,7 @@ let portal: HTMLElement;
 let requests: { path: string; body: unknown }[];
 let originalAdapter: typeof http.defaults.adapter;
 
-const entry = (name: string, mimetype: string, isFile = true) => ({
+const entry = (name: string, mimetype: string, isFile = true, isProtected = false) => ({
     object: 'file_object',
     attributes: {
         name,
@@ -30,6 +32,7 @@ const entry = (name: string, mimetype: string, isFile = true) => ({
         size: isFile ? 12 : 0,
         is_file: isFile,
         is_symlink: false,
+        is_protected: isProtected,
         mimetype,
         created_at: '2026-01-01T12:00:00Z',
         modified_at: '2026-01-01T12:00:00Z',
@@ -41,6 +44,7 @@ const listings = new Map([
         [entry('b.txt', 'text/plain'), entry('plugins', 'inode/directory', false), entry('a.zip', 'application/zip')],
     ],
     ['/config/plugins', [entry('inner.yml', 'text/plain')]],
+    ['/guarded', [entry('locked.txt', 'text/plain', true, true), entry('open.txt', 'text/plain')]],
 ]);
 const manyNames = Array.from({ length: 252 }, (_, index) => `f${String(index).padStart(3, '0')}.txt`);
 
@@ -56,10 +60,10 @@ beforeEach(async () => {
         const { default: Checkbox } = await importOriginal<{ default: typeof SelectFileCheckbox }>();
 
         return {
-            default: ({ name }: { name: string }) => {
+            default: ({ name, disabled }: { name: string; disabled?: boolean }) => {
                 rowRenders.set(name, (rowRenders.get(name) ?? 0) + 1);
 
-                return <Checkbox name={name} />;
+                return <Checkbox name={name} disabled={disabled} />;
             },
         };
     });
@@ -129,6 +133,8 @@ function Custom({ model }: ReplacementProps<'server.files.manager'>) {
             <button onClick={() => run(actions.open('plugins'))}>Open plugins</button>
             <button onClick={() => run(actions.navigate('..'))}>Up</button>
             <button onClick={() => run(actions.remove(['b.txt']))}>Remove</button>
+            <button onClick={() => run(actions.remove(['locked.txt']))}>Remove protected</button>
+            <button onClick={() => run(actions.download('locked.txt'))}>Download protected</button>
             <button onClick={() => actions.select([...manyNames, 'a.zip', 'b.txt'])}>Select all</button>
             <button onClick={() => run(actions.refresh())}>Refresh</button>
             <span>{error}</span>
@@ -274,4 +280,51 @@ it('removes a file deleted from its row menu from the selection', async () => {
     expect(JSON.parse(String(deletes()[0].body))).toEqual({ root: '/config', files: ['b.txt'] });
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Archive' })).not.toBeInTheDocument());
     expect(screen.queryByRole('link', { name: 'b.txt' })).not.toBeInTheDocument();
+});
+
+it('lists protected files without letting them join the selection', async () => {
+    open(undefined, '/guarded');
+
+    expect(await screen.findByRole('link', { name: 'open.txt' })).toBeVisible();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all files' }));
+
+    expect(screen.getByRole('checkbox', { name: 'Select open.txt' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('checkbox', { name: 'Select locked.txt' })).toHaveAttribute('aria-checked', 'false');
+});
+
+it('disables the checkbox and drops the editor link of a protected file', async () => {
+    open(undefined, '/guarded');
+
+    expect(await screen.findByRole('link', { name: 'open.txt' })).toBeVisible();
+    expect(screen.getByRole('checkbox', { name: 'Select locked.txt' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.queryByRole('link', { name: 'locked.txt' })).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: PROTECTED_FILE_TOOLTIP })).toBeVisible();
+});
+
+it('refuses mutations and downloads of a protected file through the model', async () => {
+    replace(Custom);
+    open(undefined, '/guarded');
+    await waitFor(() => expect(state().loading).toBe(false));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove protected' }));
+    expect(await screen.findByText(PROTECTED_FILE_TOOLTIP)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Download protected' }));
+
+    expect(deletes()).toHaveLength(0);
+    expect(requests.filter((request) => request.path.endsWith('/files/write'))).toHaveLength(0);
+});
+
+it('skips protected names when uploading and reports them', async () => {
+    const error = vi.spyOn(toast, 'error').mockImplementation(() => '');
+
+    open(undefined, '/guarded');
+    await screen.findByRole('link', { name: 'open.txt' });
+
+    fireEvent.change(screen.getByLabelText('Upload files'), {
+        target: { files: [new File(['data'], 'locked.txt', { type: 'text/plain' })] },
+    });
+
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('locked.txt'));
+
+    expect(requests.some((request) => request.path.endsWith('/files/upload'))).toBe(false);
 });
