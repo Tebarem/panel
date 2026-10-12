@@ -1,0 +1,10 @@
+{
+    "name": "ramjet-theme",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "contrast": "node scripts/contrast.mjs"
+    }
+}

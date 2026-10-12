@@ -1,0 +1,173 @@
+/*
+ * Ramjet theme: the ramjet.gg look for the panel.
+ *
+ * Mostly design-token overrides (see the panel's docs/theming/tokens.md). The values mirror
+ * the website's tokens in ramjet/src/styles.css, so the site and the panel read as one product.
+ *
+ * Cascade rules (from the dark-theme template):
+ *   - `:root.dark` (0,2,0) beats the panel's `.dark` and `:root` blocks regardless of load order.
+ *   - Stay outside any @layer: the panel's tokens are unlayered and would win otherwise.
+ *
+ * Run `npm run contrast` after changing a colour.
+ */
+
+@font-face {
+    font-family: 'Archivo Ramjet';
+    font-style: normal;
+    font-display: swap;
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    src: url('./assets/archivo-latin-wdth.woff2') format('woff2-variations');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+        U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root.dark {
+    /* 1. SURFACES (lightness ladder: terminal < background < card < muted < popover < secondary) */
+    --background: #0a0b0d;
+    --card: #111317;
+    --muted: #15181c;
+    --popover: #181b20;
+    --secondary: #1d2026;
+    --sunken: #0c0d10;
+
+    /* 2. TEXT */
+    --foreground: #eceef1;
+    --card-foreground: var(--foreground);
+    --popover-foreground: var(--foreground);
+    --secondary-foreground: var(--foreground);
+    --muted-foreground: #9aa1ac;
+
+    /* 3. BRAND: afterburner orange. Light enough to be text on dark surfaces; dark ink on top. */
+    --primary: #ff7a1a;
+    --primary-foreground: #0a0b0d;
+    --accent: #ff9a52; /* links, active nav underline, progress bar */
+    --accent-foreground: #0a0b0d;
+    --ring: #ff7a1a;
+
+    /* 4. LINES AND CONTROLS */
+    --border: #262a31;
+    --input: #1d2026;
+
+    /* 5. STATUS. Info-blue doubles as success so "running" matches the website's badges. */
+    --state-foreground: #0a0b0d;
+    --destructive: #ff6b6b;
+    --destructive-foreground: var(--state-foreground);
+    --success: #5cc8ff;
+    --success-foreground: var(--state-foreground);
+    --warning: #ffc75a;
+    --warning-foreground: var(--state-foreground);
+    --caution: #ff9a52;
+    --caution-foreground: var(--state-foreground);
+
+    /* 6. CHARTS: drawn on --card, each 3:1 or better against it. */
+    --chart-1: #5cc8ff; /* CPU, memory, network out */
+    --chart-2: #ffc75a; /* network in */
+    --chart-3: var(--primary);
+    --chart-4: #7ddc9a;
+    --chart-5: var(--destructive);
+
+    /* 7. SIDEBAR */
+    --sidebar: var(--card);
+    --sidebar-foreground: var(--card-foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--popover);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+
+    /* 8. SHAPE AND TYPE: body stays IBM Plex Sans (the panel ships it); headings use Archivo. */
+    --font-header: 'Archivo Ramjet', 'IBM Plex Sans', system-ui, sans-serif;
+
+    /* 9. TERMINAL. Ghostty reads pure #000000 as "unset", so the darkest value is #070809. */
+    --terminal-background: #070809;
+    --terminal-foreground: #d9dde4;
+    --terminal-cursor: var(--terminal-background);
+    --terminal-selection: #ffb27a;
+    --terminal-selection-foreground: #0a0b0d;
+    --terminal-ansi-black: #2b2f37;
+    --terminal-ansi-red: #ff7a7a;
+    --terminal-ansi-green: #8fd18a;
+    --terminal-ansi-yellow: #ffc75a;
+    --terminal-ansi-blue: #6fb6ff;
+    --terminal-ansi-magenta: #d29cf2;
+    --terminal-ansi-cyan: #5cc8ff;
+    --terminal-ansi-white: #c9cdd6;
+    --terminal-ansi-bright-black: #8a91a0;
+    --terminal-ansi-bright-red: #ff9e9e;
+    --terminal-ansi-bright-green: #b1e6ab;
+    --terminal-ansi-bright-yellow: #ffdb8f;
+    --terminal-ansi-bright-blue: #9fcdff;
+    --terminal-ansi-bright-magenta: #e3bdfb;
+    --terminal-ansi-bright-cyan: #94e0ff;
+    --terminal-ansi-bright-white: #f4f5f8;
+
+    /* 10. CODE EDITOR */
+    --editor-background: #0f1114;
+    --editor-foreground: #d9dde4;
+    --editor-muted: #8a91a0;
+    --editor-caret: #ff9a52;
+    --editor-selection: #3a2a1c;
+    --editor-selected-foreground: #ffffff;
+    --editor-active-line: #15181c;
+    --editor-border: #262a31;
+    --editor-search-match: #4d3a16;
+    --editor-search-match-selected: #6b4f1a;
+    --editor-tooltip: #181b20;
+    --editor-tooltip-border: #2b3038;
+    --editor-syntax-keyword: #d29cf2;
+    --editor-syntax-name: #ff8f8f;
+    --editor-syntax-function: #6fb6ff;
+    --editor-syntax-constant: #ffad70;
+    --editor-syntax-definition: #5cc8ff;
+    --editor-syntax-type: #ffc75a;
+    --editor-syntax-operator: #a9b6c9;
+    --editor-syntax-string: #8fd18a;
+    --editor-syntax-invalid: #ff9e9e;
+
+    /* 11. TEXT SELECTION */
+    --selection: var(--terminal-selection);
+    --selection-foreground: var(--terminal-selection-foreground);
+
+    /* 12. SCROLLBARS */
+    --scrollbar-thumb: var(--muted-foreground);
+    --scrollbar-thumb-fill: var(--muted);
+    --scrollbar-track: transparent;
+
+    /* 13. BROWSER CHROME */
+    --color-scheme: dark;
+    --theme-color: #0a0b0d; /* = --background and RamjetThemeProvider::THEME_COLOR */
+}
+
+/*
+ * Brand marks. Not expressible as tokens, so these are the only component selectors in the theme.
+ * Both target stable hooks in core: the logo link (#logo) and the PterodactylMark's aria-label.
+ */
+
+/* Ramjet emblem before the site name in the top bar. */
+:root.dark #logo a::before {
+    content: '';
+    display: inline-block;
+    width: 1.75rem;
+    height: 1.75rem;
+    margin-right: 0.625rem;
+    vertical-align: -0.375rem;
+    background: url('./assets/emblem.png') center / contain no-repeat;
+}
+
+:root.dark #logo a {
+    font-weight: 800;
+    font-stretch: 118%;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+/* Sign-in screens: the Pterodactyl mark keeps its box (so layout is unchanged) but the emblem is drawn instead. */
+:root.dark svg[aria-label='Pterodactyl'] {
+    visibility: hidden;
+}
+
+:root.dark :has(> svg[aria-label='Pterodactyl']) {
+    background: url('./assets/emblem.png') center / min(70%, 12rem) no-repeat;
+}

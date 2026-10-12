@@ -48,6 +48,7 @@ result
 /extensions/*
 !/extensions/ramjet-oauth/
 !/extensions/ramjet-eggs/
+!/extensions/ramjet-theme/
 /extensions/ramjet-oauth/vendor/
 /extensions/ramjet-eggs/vendor/
 
