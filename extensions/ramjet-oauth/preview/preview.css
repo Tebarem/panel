@@ -1,0 +1,7 @@
+/*
+ * The panel's own Tailwind entry, so the preview renders with the real theme tokens and utilities.
+ * The @source lines make Tailwind scan the panel's components and this extension, not just this folder.
+ */
+@import '../../../resources/scripts/assets/tailwind.css';
+@source '../../../resources/scripts';
+@source '../src';

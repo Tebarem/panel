@@ -1,0 +1,12 @@
+{
+    "extends": "../tsconfig.json",
+    "compilerOptions": {
+        "types": ["vite/client"],
+        "paths": {
+            "@/*": ["../../../resources/scripts/*"],
+            "@pterodactyl/sdk": ["../../../resources/scripts/sdk/index.ts"],
+            "@pterodactyl/sdk/api": ["../../../resources/scripts/sdk/api.ts"]
+        }
+    },
+    "include": ["./**/*.ts", "./**/*.tsx", "../src/client/**/*"]
+}

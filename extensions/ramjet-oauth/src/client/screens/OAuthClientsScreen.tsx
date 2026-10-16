@@ -1,7 +1,19 @@
 import { useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { KeyRound, Plus } from 'lucide-react';
-import { Alert, Button, PageContentBlock, Spinner, httpErrorToHuman } from '@pterodactyl/sdk';
+import {
+    Alert,
+    Button,
+    Empty,
+    EmptyContent,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
+    PageContentBlock,
+    Spinner,
+    httpErrorToHuman,
+} from '@pterodactyl/sdk';
 import { fetchClients, type OAuthClient } from '../api';
 import { CLIENTS_QUERY_KEY } from '../helpers';
 import ClientDialog from './ClientDialog';
@@ -19,7 +31,7 @@ interface Confirming {
 interface ConfirmCopy {
     title: (name: string) => string;
     label: string;
-    danger: boolean;
+    tone: 'danger' | 'warning';
     body: ReactNode;
 }
 
@@ -27,7 +39,7 @@ const CONFIRM = {
     regenerate: {
         title: (name) => `New secret for ${name}`,
         label: 'Create new secret',
-        danger: false,
+        tone: 'warning',
         body: (
             <p>
                 The current secret stops working right away, and every token issued to this app is revoked. The new
@@ -38,7 +50,7 @@ const CONFIRM = {
     revoke: {
         title: (name) => `Revoke tokens of ${name}`,
         label: 'Revoke tokens',
-        danger: true,
+        tone: 'danger',
         body: (
             <p>
                 Every access and refresh token issued to this app is revoked. Anyone signed in through it has to sign in
@@ -49,23 +61,45 @@ const CONFIRM = {
     delete: {
         title: (name) => `Delete ${name}`,
         label: 'Delete app',
-        danger: true,
+        tone: 'danger',
         body: <p>This deletes the app and all of its tokens. Apps that use it stop working and cannot be restored.</p>,
     },
 } satisfies Record<ClientAction, ConfirmCopy>;
 
-function EmptyState({ onCreate }: { onCreate: ReactNode }) {
+/** The panel's "create" button: a plus icon and a sentence-case label, as on the other admin pages. */
+function NewAppButton({ onClick }: { onClick: () => void }) {
     return (
-        <section className='rjo:rounded-sm rjo:border rjo:border-dashed rjo:border-border rjo:bg-card rjo:px-6 rjo:py-12 rjo:text-center rjo:sm:px-10'>
-            <KeyRound aria-hidden='true' className='rjo:mx-auto rjo:size-8 rjo:text-muted-foreground' />
-            <h2 className='rjo:mt-4 rjo:font-header rjo:text-lg rjo:font-semibold rjo:text-foreground'>
-                No OAuth apps yet
-            </h2>
-            <p className='rjo:mx-auto rjo:mt-2 rjo:max-w-xl rjo:text-sm rjo:leading-relaxed rjo:text-muted-foreground'>
-                Create an app to let it sign users in with this panel. Give it the redirect URIs it uses after sign-in.
-            </p>
-            <div className='rjo:mt-6'>{onCreate}</div>
-        </section>
+        <Button
+            type='button'
+            onClick={onClick}
+            className='rjo:inline-flex rjo:h-9 rjo:shrink-0 rjo:items-center rjo:justify-center rjo:gap-2 rjo:px-3 rjo:font-medium rjo:tracking-normal rjo:normal-case'
+        >
+            <span className='rjo:inline-flex rjo:items-center rjo:gap-2'>
+                <Plus aria-hidden='true' className='rjo:h-4 rjo:w-4' />
+                New app
+            </span>
+        </Button>
+    );
+}
+
+/** The empty state of an admin list, with the same structure and spacing as the panel's AdminListEmpty. */
+function EmptyApps() {
+    return (
+        <div className='rjo:rounded-sm rjo:border rjo:border-border rjo:bg-card'>
+            <Empty className='rjo:gap-4 rjo:md:p-8'>
+                <EmptyHeader>
+                    <EmptyMedia variant='icon'>
+                        <KeyRound />
+                    </EmptyMedia>
+                    <EmptyTitle>No OAuth apps yet</EmptyTitle>
+                    <EmptyDescription>
+                        Create an app to let it sign users in with this panel. Give it the redirect URIs it uses after
+                        sign-in.
+                    </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent />
+            </Empty>
+        </div>
     );
 }
 
@@ -86,25 +120,18 @@ export default function OAuthClientsScreen() {
     const [issued, setIssued] = useState<IssuedSecret | null>(null);
     const actions = useClientActions({ onIssued: setIssued, onDone: () => setConfirming(null) });
 
-    const createButton = (
-        <Button type='button' onClick={() => setEditing('new')}>
-            <span className='rjo:inline-flex rjo:items-center rjo:gap-2'>
-                <Plus aria-hidden='true' className='rjo:size-4' />
-                New OAuth app
-            </span>
-        </Button>
-    );
-
     return (
         <PageContentBlock title='OAuth Apps'>
             <header className='rjo:mb-6 rjo:flex rjo:flex-col rjo:gap-3 rjo:sm:flex-row rjo:sm:items-center rjo:sm:justify-between'>
                 <div className='rjo:min-w-0'>
-                    <h1 className='rjo:font-header rjo:text-2xl rjo:font-semibold rjo:text-foreground'>OAuth Apps</h1>
+                    <h1 className='rjo:font-header rjo:text-2xl rjo:font-semibold rjo:tracking-normal rjo:text-foreground'>
+                        OAuth Apps
+                    </h1>
                     <p className='rjo:mt-1 rjo:text-sm rjo:leading-relaxed rjo:text-foreground/70'>
-                        Apps that sign users in with this panel. Each one has its own client ID.
+                        Apps that sign users in with this panel. Each app has its own client ID.
                     </p>
                 </div>
-                {clients && clients.length > 0 && <div className='rjo:shrink-0'>{createButton}</div>}
+                <NewAppButton onClick={() => setEditing('new')} />
             </header>
 
             <OidcEndpoints />
@@ -122,7 +149,7 @@ export default function OAuthClientsScreen() {
 
             {!clients && !error && <Spinner size='large' centered />}
 
-            {clients && clients.length === 0 && <EmptyState onCreate={createButton} />}
+            {clients && clients.length === 0 && <EmptyApps />}
 
             {clients && clients.length > 0 && (
                 <ClientsTable
@@ -135,7 +162,7 @@ export default function OAuthClientsScreen() {
 
             {editing !== null && (
                 <ClientDialog
-                    key={editing === 'new' ? 'new' : String(editing.id)}
+                    key={editing === 'new' ? 'new' : editing.id}
                     client={editing === 'new' ? null : editing}
                     onClose={() => setEditing(null)}
                     onIssued={(secret, clientName) => setIssued({ clientName, reason: 'created', secret })}
@@ -146,7 +173,7 @@ export default function OAuthClientsScreen() {
                 <ConfirmDialog
                     title={CONFIRM[confirming.action].title(confirming.client.name)}
                     confirmLabel={CONFIRM[confirming.action].label}
-                    danger={CONFIRM[confirming.action].danger}
+                    tone={CONFIRM[confirming.action].tone}
                     pending={actions.pending}
                     onClose={() => setConfirming(null)}
                     onConfirm={() => actions.run(confirming.action, confirming.client)}

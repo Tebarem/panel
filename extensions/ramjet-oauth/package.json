@@ -5,6 +5,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "typecheck": "tsc --noEmit"
+        "typecheck": "tsc --noEmit",
+        "preview:ui": "vite --config preview/vite.config.mjs",
+        "typecheck:preview": "tsc --noEmit -p preview/tsconfig.json"
     }
 }
