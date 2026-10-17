@@ -1,8 +1,11 @@
 @php
     // Set by the preview command (--inline-logo) to embed the emblem; mail uses the panel's stable URLs.
     $logo = $ramjetEmailLogo ?? [];
-    $logoSrc = $logo['src'] ?? url('/extensions/ramjet-theme/email/emblem.png');
-    $logoSrc2x = $logo['src2x'] ?? url('/extensions/ramjet-theme/email/emblem@2x.png');
+    // The emblem sits on its own dark tile: mail apps that invert colours in dark mode (Gmail apps,
+    // Outlook) can turn the header white but never recolour images. Bump ?v= when the image changes,
+    // because mail image proxies cache by URL.
+    $logoSrc = $logo['src'] ?? url('/extensions/ramjet-theme/email/emblem.png?v=2');
+    $logoSrc2x = $logo['src2x'] ?? url('/extensions/ramjet-theme/email/emblem@2x.png?v=2');
 
     $isError = ($level ?? 'info') === 'error';
     // Destructive red for error-level mails, afterburner orange otherwise. Dark ink text on both.
