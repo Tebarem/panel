@@ -49,6 +49,7 @@ result
 !/extensions/ramjet-oauth/
 !/extensions/ramjet-eggs/
 !/extensions/ramjet-theme/
+!/extensions/ramjet-proxy-provisioning/
 /extensions/ramjet-oauth/vendor/
 /extensions/ramjet-eggs/vendor/
 

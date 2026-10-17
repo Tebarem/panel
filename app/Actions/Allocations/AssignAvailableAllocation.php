@@ -42,8 +42,11 @@ final readonly class AssignAvailableAllocation implements AssignsAvailableAlloca
             $allocation = $server->node->allocations()->lockForUpdate()->where('ip', $primaryAllocation->ip)->where('port', $port)->firstOrFail();
         }
 
-        $allocation->update(['server_id' => $server->id]);
+        // Conditional claim: the row is locked by the caller's transaction, but guard the write too so a
+        // row that another server took can never be re-bound here.
+        $claimed = Allocation::query()->whereKey($allocation->id)->whereNull('server_id')->update(['server_id' => $server->id]);
+        throw_unless($claimed === 1, DisplayException::class, 'The selected allocation was assigned to another server; try again.');
 
-        return $allocation;
+        return $allocation->refresh();
     }
 }

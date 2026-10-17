@@ -165,7 +165,13 @@ final readonly class CreateServer implements CreatesServers
             $records = array_merge($records, $data['allocation_additional']);
         }
 
-        Allocation::query()->whereIn('id', $records)->update(['server_id' => $server->id]);
+        // Claim only allocations that are still unassigned. Another server may have taken one of them
+        // between selection and this write; a partial claim throws so the surrounding transaction
+        // rolls back the server insert instead of two servers binding the same port.
+        $records = array_values(array_unique($records));
+        $claimed = Allocation::query()->whereIn('id', $records)->whereNull('server_id')->update(['server_id' => $server->id]);
+
+        throw_unless($claimed === count($records), NoViableAllocationException::class, 'One of the selected allocations was assigned to another server; try again.');
     }
 
     /** @param Collection<int, ValidatedEggVariable> $variables */
