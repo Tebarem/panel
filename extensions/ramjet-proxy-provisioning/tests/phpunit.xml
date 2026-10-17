@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.0/phpunit.xsd" bootstrap="bootstrap.php" colors="true">
+  <testsuites>
+    <testsuite name="ramjet-proxy-provisioning">
+      <directory>./Provisioning</directory>
+    </testsuite>
+  </testsuites>
+  <php>
+    <env name="APP_ENV" value="testing"/>
+    <env name="CACHE_STORE" value="array"/>
+    <env name="MAIL_MAILER" value="array"/>
+    <env name="QUEUE_CONNECTION" value="sync"/>
+    <!-- "(false)" rather than "false": PHPUnit turns "false" into an empty string. -->
+    <env name="RECAPTCHA_ENABLED" value="(false)"/>
+    <env name="SESSION_DRIVER" value="array"/>
+    <!-- Only the panel's clean fixtures: the extensions directory of the worktree may hold other packages in progress. -->
+    <env name="PTERODACTYL_EXTENSIONS_DIRECTORY" value="tests/Fixtures/extensions"/>
+  </php>
+</phpunit>

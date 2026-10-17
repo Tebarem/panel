@@ -1,0 +1,4 @@
+@import 'tailwindcss/theme.css' layer(theme) prefix(rjproxy);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(rjproxy);
+@import '../../../../packages/sdk/theme.css';
+@source './**/*.{ts,tsx}';

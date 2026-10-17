@@ -1,0 +1,22 @@
+{
+    "$schema": "../../packages/sdk/manifest.schema.json",
+    "id": "ramjet-proxy-provisioning",
+    "name": "Ramjet Proxy Provisioning",
+    "version": "1.0.0",
+    "description": "Lets every customer create one Ramjet Proxy server for themselves from the dashboard.",
+    "author": "Ramjet",
+    "provider": "Ramjet\\ProxyProvisioning\\RamjetProxyProvisioningProvider",
+    "autoload": {
+        "Ramjet\\ProxyProvisioning\\": "src"
+    },
+    "requires": {
+        "panel": "^2.0.0-dev",
+        "sdk": "^2.0.0-beta.4",
+        "php": "^8.3"
+    },
+    "ui": {
+        "entry": "dist/client.js",
+        "mode": "native",
+        "prefix": "rjproxy"
+    }
+}
